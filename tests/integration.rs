@@ -17,3 +17,14 @@ fn test_list_files() {
     assert!(entries.iter().any(|e| e.name() == "foo.txt"));
     assert!(entries.iter().any(|e| e.name() == "bar.txt"));
 }
+
+#[test]
+fn test_list_non_directory() {
+    // Création d'un fichier temporaire
+    let file_path = std::env::temp_dir().join("temp_file.txt");
+    std::fs::File::create(&file_path).unwrap();
+
+    // Tentative de lister les fichiers dans un fichier
+    let result = lsr::fs::list(&file_path);
+    assert!(result.is_err());
+}
