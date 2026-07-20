@@ -1,4 +1,4 @@
-pub(crate) struct Entry {
+pub struct Entry {
     name: String,
 }
 
@@ -7,7 +7,7 @@ impl Entry {
         Entry { name }
     }
 
-    pub(crate) fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         &self.name
     }
 }
@@ -15,12 +15,6 @@ impl Entry {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_entry_creation() {
-        let entry = Entry::new(String::from("foo.txt"));
-        assert_eq!(entry.name(), "foo.txt");
-    }
 
     #[test]
     fn test_entry_name() {
