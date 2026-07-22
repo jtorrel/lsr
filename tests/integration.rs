@@ -1,4 +1,7 @@
 use lsr::entry::Entry;
+
+use std::fs::File;
+use std::io::Write;
 use tempfile::TempDir;
 use tempfile::tempdir;
 
@@ -8,8 +11,8 @@ fn test_list_files() {
     let dir = tempdir().unwrap();
 
     // Création de fichiers temporaires dans le répertoire
-    std::fs::File::create(dir.path().join("foo.txt")).unwrap();
-    std::fs::File::create(dir.path().join("bar.txt")).unwrap();
+    File::create(dir.path().join("foo.txt")).unwrap();
+    File::create(dir.path().join("bar.txt")).unwrap();
 
     // Récupération des entrées du répertoire temporaire
     let entries: Vec<Entry> = lsr::fs::list(dir.path(), false).unwrap();
@@ -23,7 +26,7 @@ fn test_list_files() {
 fn test_list_non_directory() {
     // Création d'un fichier temporaire
     let file_path = std::env::temp_dir().join("temp_file.txt");
-    std::fs::File::create(&file_path).unwrap();
+    File::create(&file_path).unwrap();
 
     // Tentative de lister les fichiers dans un fichier
     let result = lsr::fs::list(&file_path, false);
@@ -36,8 +39,8 @@ fn test_list_hidden_files() {
     let dir: TempDir = tempdir().unwrap();
 
     // Création de fichiers temporaires dans le répertoire
-    std::fs::File::create(dir.path().join("foo.txt")).unwrap();
-    std::fs::File::create(dir.path().join(".hidden.txt")).unwrap();
+    File::create(dir.path().join("foo.txt")).unwrap();
+    File::create(dir.path().join(".hidden.txt")).unwrap();
 
     // Récupération des entrées du répertoire temporaire sans l'option "all"
     let entries_without_all: Vec<Entry> = lsr::fs::list(dir.path(), false).unwrap();
@@ -64,8 +67,8 @@ fn test_list_entrykind_count() {
     std::fs::create_dir(&subdir).unwrap();
 
     // Création de fichiers temporaires dans le répertoire
-    std::fs::File::create(subdir.join("foo.txt")).unwrap();
-    std::fs::File::create(subdir.join("bar.txt")).unwrap();
+    File::create(subdir.join("foo.txt")).unwrap();
+    File::create(subdir.join("bar.txt")).unwrap();
 
     // Récupération des entrées du répertoire temporaire
     let entries: Vec<Entry> = lsr::fs::list(dir.path(), true).unwrap();
@@ -79,6 +82,31 @@ fn test_list_entrykind_count() {
                 }
                 _ => panic!("Expected a directory entry"),
             }
+        }
+    }
+}
+
+#[test]
+fn test_list_entrykind_size() {
+    // Répertoire temporaire pour les tests
+    let dir: TempDir = tempdir().unwrap();
+
+    // Création de fichiers temporaires dans le répertoire
+    {
+        let mut foo_file: File = File::create(dir.path().join("foo.txt")).unwrap();
+        foo_file.write_all(b"hello").unwrap();
+    } // Drop pour s'assurer que le fichier est écrit avant de continuer
+
+    // Récupération des entrées du répertoire temporaire
+    let entries: Vec<Entry> = lsr::fs::list(dir.path(), true).unwrap();
+
+    // Vérification du type et de la taille des entrées
+    for entry in entries {
+        match entry.kind() {
+            lsr::entry::EntryKind::File { size } => {
+                assert_eq!(*size, 5); // Le fichier foo.txt a une taille de 5 octets
+            }
+            _ => panic!("Expected a file entry"),
         }
     }
 }
