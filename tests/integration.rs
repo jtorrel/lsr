@@ -1,4 +1,5 @@
 use lsr::entry::Entry;
+use tempfile::TempDir;
 use tempfile::tempdir;
 
 #[test]
@@ -32,7 +33,7 @@ fn test_list_non_directory() {
 #[test]
 fn test_list_hidden_files() {
     // Répertoire temporaire pour les tests
-    let dir = tempdir().unwrap();
+    let dir: TempDir = tempdir().unwrap();
 
     // Création de fichiers temporaires dans le répertoire
     std::fs::File::create(dir.path().join("foo.txt")).unwrap();
@@ -53,4 +54,31 @@ fn test_list_hidden_files() {
     assert_eq!(entries_with_all.len(), 2);
     assert!(entries_with_all.iter().any(|e| e.name() == "foo.txt"));
     assert!(entries_with_all.iter().any(|e| e.name() == ".hidden.txt"));
+}
+
+#[test]
+fn test_list_entrykind_count() {
+    // Répertoires temporaires
+    let dir: TempDir = tempdir().unwrap();
+    let subdir = dir.path().join("subdir");
+    std::fs::create_dir(&subdir).unwrap();
+
+    // Création de fichiers temporaires dans le répertoire
+    std::fs::File::create(subdir.join("foo.txt")).unwrap();
+    std::fs::File::create(subdir.join("bar.txt")).unwrap();
+
+    // Récupération des entrées du répertoire temporaire
+    let entries: Vec<Entry> = lsr::fs::list(dir.path(), true).unwrap();
+
+    // Vérification du type et du nombre d'entrées pour le sous-répertoire
+    for entry in entries {
+        if entry.name() == "subdir" {
+            match entry.kind() {
+                lsr::entry::EntryKind::Directory { count } => {
+                    assert_eq!(*count, 2); // Le sous-répertoire contient 2 fichiers
+                }
+                _ => panic!("Expected a directory entry"),
+            }
+        }
+    }
 }

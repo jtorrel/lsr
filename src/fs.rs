@@ -1,4 +1,6 @@
 use crate::entry::Entry;
+use crate::entry::EntryKind;
+
 use chrono::{DateTime, Local};
 use std::path::Path;
 
@@ -15,7 +17,13 @@ pub fn list(path: &Path, all: bool) -> Result<Vec<Entry>, std::io::Error> {
             let readonly = metadata.permissions().readonly(); // bool
 
             if all || !name.starts_with('.') {
-                entries.push(Entry::new(name, size, modified, readonly));
+                let kind = if metadata.is_dir() {
+                    let count = std::fs::read_dir(entry.path())?.count();
+                    EntryKind::Directory { count }
+                } else {
+                    EntryKind::File { size }
+                };
+                entries.push(Entry::new(name, kind, modified, readonly));
             }
         }
         Ok(entries)
