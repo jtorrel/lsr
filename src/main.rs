@@ -6,11 +6,15 @@ struct Cli {
 
     #[arg(short, long)]
     all: bool,
+
+    #[arg(short, long)]
+    long: bool,
 }
 
 fn main() {
     let cli = Cli::parse();
     let arg_all: bool = cli.all;
+    let arg_long: bool = cli.long;
     let selected_path = cli.path.unwrap_or_else(|| std::env::current_dir().unwrap());
 
     // Liste des fichiers dans le répertoire sélectionné
@@ -18,6 +22,6 @@ fn main() {
 
     // Affichage des noms des fichiers
     for entry in entries {
-        println!("{}", entry.name());
+        println!("{}", entry.format_entry(arg_long));
     }
 }
