@@ -15,6 +15,13 @@ struct Cli {
 }
 
 fn main() {
+    if let Err(e) = run() {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    }
+}
+
+fn run() -> Result<(), lsr::errors::LsrError> {
     let cli = Cli::parse();
     let arg_all: bool = cli.all;
     let arg_long: bool = cli.long;
@@ -46,4 +53,5 @@ fn main() {
             println!("{}", entry.name());
         }
     }
+    Ok(())
 }

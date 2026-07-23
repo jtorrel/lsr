@@ -1,11 +1,12 @@
 use crate::entry::Entry;
 use crate::entry::EntryKind;
+use crate::errors::LsrError;
 use crate::options::Options;
 
 use chrono::{DateTime, Local};
 use std::path::Path;
 
-pub fn list(path: &Path, options: &Options) -> Result<Vec<Entry>, std::io::Error> {
+pub fn list(path: &Path, options: &Options) -> Result<Vec<Entry>, LsrError> {
     let mut subdirectories: Vec<std::path::PathBuf> = Vec::new();
     let current = path.to_path_buf();
     let mut entries = Vec::new();
@@ -13,10 +14,7 @@ pub fn list(path: &Path, options: &Options) -> Result<Vec<Entry>, std::io::Error
     if path.is_dir() {
         subdirectories.push(current);
     } else {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "Le chemin fourni n'est pas un répertoire.",
-        ));
+        return Err(LsrError::InvalidPath(path.to_string_lossy().to_string()));
     }
 
     while let Some(current) = subdirectories.pop() {
