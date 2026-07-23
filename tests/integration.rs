@@ -2,6 +2,7 @@ use lsr::entry::Entry;
 
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 use tempfile::TempDir;
 use tempfile::tempdir;
 
@@ -15,7 +16,14 @@ fn test_list_files() {
     File::create(dir.path().join("bar.txt")).unwrap();
 
     // Récupération des entrées du répertoire temporaire
-    let entries: Vec<Entry> = lsr::fs::list(dir.path(), false).unwrap();
+    let entries: Vec<Entry> = lsr::fs::list(
+        dir.path(),
+        &lsr::options::Options {
+            all: false,
+            recursive: false,
+        },
+    )
+    .unwrap();
 
     assert_eq!(entries.len(), 2);
     assert!(entries.iter().any(|e| e.name() == "foo.txt"));
@@ -29,7 +37,13 @@ fn test_list_non_directory() {
     File::create(&file_path).unwrap();
 
     // Tentative de lister les fichiers dans un fichier
-    let result = lsr::fs::list(&file_path, false);
+    let result = lsr::fs::list(
+        &file_path,
+        &lsr::options::Options {
+            all: false,
+            recursive: false,
+        },
+    );
     assert!(result.is_err());
 }
 
@@ -43,7 +57,14 @@ fn test_list_hidden_files() {
     File::create(dir.path().join(".hidden.txt")).unwrap();
 
     // Récupération des entrées du répertoire temporaire sans l'option "all"
-    let entries_without_all: Vec<Entry> = lsr::fs::list(dir.path(), false).unwrap();
+    let entries_without_all: Vec<Entry> = lsr::fs::list(
+        dir.path(),
+        &lsr::options::Options {
+            all: false,
+            recursive: false,
+        },
+    )
+    .unwrap();
     assert_eq!(entries_without_all.len(), 1);
     assert!(entries_without_all.iter().any(|e| e.name() == "foo.txt"));
     assert!(
@@ -53,7 +74,14 @@ fn test_list_hidden_files() {
     );
 
     // Récupération des entrées du répertoire temporaire avec l'option "all"
-    let entries_with_all: Vec<Entry> = lsr::fs::list(dir.path(), true).unwrap();
+    let entries_with_all: Vec<Entry> = lsr::fs::list(
+        dir.path(),
+        &lsr::options::Options {
+            all: true,
+            recursive: false,
+        },
+    )
+    .unwrap();
     assert_eq!(entries_with_all.len(), 2);
     assert!(entries_with_all.iter().any(|e| e.name() == "foo.txt"));
     assert!(entries_with_all.iter().any(|e| e.name() == ".hidden.txt"));
@@ -71,7 +99,14 @@ fn test_list_entrykind_count() {
     File::create(subdir.join("bar.txt")).unwrap();
 
     // Récupération des entrées du répertoire temporaire
-    let entries: Vec<Entry> = lsr::fs::list(dir.path(), true).unwrap();
+    let entries: Vec<Entry> = lsr::fs::list(
+        dir.path(),
+        &lsr::options::Options {
+            all: false,
+            recursive: false,
+        },
+    )
+    .unwrap();
 
     // Vérification du type et du nombre d'entrées pour le sous-répertoire
     for entry in entries {
@@ -98,7 +133,14 @@ fn test_list_entrykind_size() {
     } // Drop pour s'assurer que le fichier est écrit avant de continuer
 
     // Récupération des entrées du répertoire temporaire
-    let entries: Vec<Entry> = lsr::fs::list(dir.path(), true).unwrap();
+    let entries: Vec<Entry> = lsr::fs::list(
+        dir.path(),
+        &lsr::options::Options {
+            all: false,
+            recursive: false,
+        },
+    )
+    .unwrap();
 
     // Vérification du type et de la taille des entrées
     for entry in entries {
@@ -109,4 +151,34 @@ fn test_list_entrykind_size() {
             _ => panic!("Expected a file entry"),
         }
     }
+}
+
+#[test]
+fn test_list_recursive_directories() {
+    // Répertoire temporaire pour les tests
+    let dir: TempDir = tempdir().unwrap();
+
+    // Création de l'arborescence de répertoires
+    let subdir1 = dir.path().join("subdir1");
+    std::fs::create_dir(&subdir1).unwrap();
+    let subdir2 = subdir1.join("subdir2");
+    std::fs::create_dir(&subdir2).unwrap();
+    let subdir11: PathBuf = subdir1.join("subdir11");
+    std::fs::create_dir(&subdir11).unwrap();
+    let subdir12: PathBuf = subdir1.join("subdir12");
+    std::fs::create_dir(&subdir12).unwrap();
+
+    // Récupération des entrées du répertoire temporaire
+    let entries: Vec<Entry> = lsr::fs::list(
+        dir.path(),
+        &lsr::options::Options {
+            all: false,
+            recursive: true,
+        },
+    )
+    .unwrap();
+
+    // Vérification de la présence des sous-sous-répertoires
+    assert!(entries.iter().any(|e| e.name() == "subdir11"));
+    assert!(entries.iter().any(|e| e.name() == "subdir12"));
 }

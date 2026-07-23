@@ -59,7 +59,11 @@ impl Entry {
     pub fn format_entry(&self, long: bool) -> String {
         if long {
             format!(
-                "{:<30} \t{:<10} \t{:<30} \t{:<20} \t{:<10}",
+                "{} \t{:<30} \t{:<10} \t{:<30} \t{:<20} \t{:<10}",
+                match self.kind() {
+                    EntryKind::File { .. } => "",
+                    EntryKind::Directory { .. } => ":: ",
+                },
                 self.name(),
                 self.kind().to_string(),
                 self.kind().size(),
