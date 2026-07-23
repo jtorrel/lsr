@@ -55,24 +55,23 @@ impl Entry {
     pub fn readonly(&self) -> bool {
         self.readonly
     }
+}
 
-    pub fn format_entry(&self, long: bool) -> String {
-        if long {
-            format!(
-                "{} \t{:<30} \t{:<10} \t{:<30} \t{:<20} \t{:<10}",
-                match self.kind() {
-                    EntryKind::File { .. } => "",
-                    EntryKind::Directory { .. } => ":: ",
-                },
-                self.name(),
-                self.kind().to_string(),
-                self.kind().size(),
-                self.modified().format("%Y-%m-%d %H:%M").to_string(),
-                self.readonly()
-            )
-        } else {
-            self.name().to_string()
-        }
+impl std::fmt::Display for Entry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} \t{:<50} \t{:<10} \t{:<30} \t{:<20} \t{:<10}",
+            match self.kind() {
+                EntryKind::File { .. } => "",
+                EntryKind::Directory { .. } => ":: ",
+            },
+            self.name(),
+            self.kind().to_string(),
+            self.kind().size(),
+            self.modified().format("%Y-%m-%d %H:%M").to_string(),
+            self.readonly()
+        )
     }
 }
 
@@ -93,17 +92,6 @@ mod tests {
     }
 
     #[test]
-    fn test_format_entry_short() {
-        let entry = Entry::new(
-            String::from("foo.txt"),
-            EntryKind::File { size: 1024 },
-            chrono::Local::now(),
-            false,
-        );
-        assert_eq!(entry.format_entry(false), "foo.txt");
-    }
-
-    #[test]
     fn test_format_entry_long() {
         let entry = Entry::new(
             String::from("foo.txt"),
@@ -111,7 +99,7 @@ mod tests {
             chrono::Local::now(),
             false,
         );
-        let result = entry.format_entry(true);
+        let result = format!("{}", entry);
         assert!(result.contains("foo.txt"));
         assert!(result.contains("file"));
         assert!(result.contains("false"));

@@ -33,13 +33,17 @@ fn main() {
 
     if arg_long {
         println!(
-            "{:<30} \t{:<10} \t{:<30} \t{:<20} \t{:<10}\n{:-<113}",
+            "\t{:<50} \t{:<10} \t{:<30} \t{:<20} \t{:<10}\n{:-<150}\n",
             "Name", "Kind", "Size", "Modified", "Read-only", "-"
         );
     }
 
     // Affichage des noms des fichiers
     for entry in entries {
-        println!("{}", entry.format_entry(arg_long));
+        if arg_long {
+            println!("{}", entry);
+        } else {
+            println!("{}", entry.name());
+        }
     }
 }
